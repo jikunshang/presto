@@ -222,6 +222,7 @@ public final class HiveFilterPushdownDelegation
     {
         List<Column> dataColumns = hiveTableLayoutHandle.getDataColumns();
         ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode rootNode = objectMapper.createObjectNode();
         ObjectNode objectNode = objectMapper.createObjectNode();
         ArrayNode columns = objectMapper.createArrayNode();
         for (Column column : dataColumns) {
@@ -229,8 +230,9 @@ public final class HiveFilterPushdownDelegation
             singleColumn.put(column.getName(), column.getType().toString().toUpperCase());
             columns.add(singleColumn);
         }
-        objectNode.set("columns", columns);
-        return objectNode.toString();
+        rootNode.put("Table", hiveTableLayoutHandle.getSchemaTableName().getTableName());
+        rootNode.set("Columns", columns);
+        return rootNode.toString();
     }
 
     private static HiveColumnHandle getColumnHandle(VariableReferenceExpression expression,
