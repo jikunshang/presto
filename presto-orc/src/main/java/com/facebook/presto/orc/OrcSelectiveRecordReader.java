@@ -39,7 +39,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
-import com.mapd.CiderJNI;
 import io.airlift.slice.Slice;
 import org.joda.time.DateTimeZone;
 import org.openjdk.jol.info.ClassLayout;
@@ -146,7 +145,7 @@ public class OrcSelectiveRecordReader
 
     private int readPositions;
 
-    private final long jniPtr;
+    private final long jniPtr = 0;
 
     public OrcSelectiveRecordReader(
             Map<Integer, Type> includedColumns,                 // key: hiveColumnIndex
@@ -260,7 +259,7 @@ public class OrcSelectiveRecordReader
             this.coercers[zeroBasedIndices.get(entry.getKey())] = entry.getValue();
         }
 
-        this.jniPtr = CiderJNI.init();
+//        this.jniPtr = CiderJNI.init();
         requireNonNull(constantValues, "constantValues is null");
         this.constantValues = new Object[this.hiveColumnIndices.length];
         for (int columnIndex : includedColumns.keySet()) {
