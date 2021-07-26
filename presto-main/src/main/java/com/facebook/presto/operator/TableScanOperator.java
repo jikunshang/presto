@@ -34,6 +34,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.mapd.CiderJNI;
 import sun.misc.Unsafe;
 
 import java.io.Closeable;
@@ -266,12 +267,11 @@ public class TableScanOperator
             long jniPtr = page.getJniPtr();
             // assure the page is in memory before handing to another operator
             page = page.getLoadedPage();
-            if (table.getConnectorId().equals("hive")) {
-
+            if (table.getConnectorId().getCatalogName().equals("hive")) {
                 // FIXME: need to merge with Yan's part
-                String tableColumn = ""; // {"columns":[{"a":"int"},{"b":"long"}]}
-                String subQuery = ""; // json representation of query
-                page = getOutputFromCider(page, subQuery, tableColumn);
+//                String tableColumn = ""; // {"columns":[{"a":"int"},{"b":"long"}]}
+//                String subQuery = ""; // json representation of query
+                page = getOutputFromCider(page, subQuery, tableColumns);
             }
 
             // update operator stats
@@ -304,7 +304,7 @@ public class TableScanOperator
         catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        JsonNode columnArrays = node.get("columns");
+        JsonNode columnArrays = node.get("Columns");
         Iterator<JsonNode> nodes = columnArrays.elements();
         List<String> list = new ArrayList<>();
         while (nodes.hasNext()) {
@@ -318,6 +318,7 @@ public class TableScanOperator
         }
 
         Page output = null;
+        long ptr = CiderJNI.init();
         try {
             Unsafe unsafe = getUnsafe();
             for (int i = 0; i < count; i++) {
@@ -341,15 +342,6 @@ public class TableScanOperator
                     dataBuffers[i] = bufferPtr;
                     dataNulls[i] = nullPtr;
                 }
-
-                CiderJNI.processBlocks(
-                        subQuery,
-                        tableColumns,
-                        dataBuffers,
-                        dataNulls,
-                        resultBuffers,
-                        resultNulls,
-                        positionCount);
             }
 
             for (int i = 0; i < resultCount; i++) {
@@ -371,6 +363,7 @@ public class TableScanOperator
             }
 
             int resultSize = CiderJNI.processBlocks(
+                    ptr,
                     subQuery,
                     tableColumn,
                     dataBuffers,
@@ -424,6 +417,7 @@ public class TableScanOperator
             e.printStackTrace();
         }
 
+        CiderJNI.close(ptr);
         return output;
     }
 
@@ -446,7 +440,7 @@ public class TableScanOperator
         long positionCount = endCompletedPositions - completedPositions;
         operatorContext.recordProcessedInput(inputBytes, positionCount);
         operatorContext.recordRawInputWithTiming(inputBytes, positionCount, endReadTimeNanos - readTimeNanos);
-        operatorContext.updateStats(source.getRuntimeStats());
+//        operatorContext.updateStats(source.getRuntimeStats());
         completedBytes = endCompletedBytes;
         completedPositions = endCompletedPositions;
         readTimeNanos = endReadTimeNanos;

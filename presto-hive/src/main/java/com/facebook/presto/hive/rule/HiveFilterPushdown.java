@@ -392,7 +392,7 @@ public class HiveFilterPushdown
             }
             HiveTableLayoutHandle hiveTableLayoutHandle = (HiveTableLayoutHandle) layout.getHandle();
             String jsonString = HiveFilterPushdownDelegation.toJson((ProjectNode) maxSubPlan, hiveTableLayoutHandle);
-            String tableColumns = HiveFilterPushdownDelegation.toJson(hiveTableLayoutHandle);
+            String tableColumns = HiveFilterPushdownDelegation.toJson(hiveTableLayoutHandle, (ProjectNode) maxSubPlan);
             hiveTableLayoutHandle.setSubQuery(jsonString);
             hiveTableLayoutHandle.setTableColumns(tableColumns);
             TableScanNode node = new TableScanNode(

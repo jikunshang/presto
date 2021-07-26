@@ -109,6 +109,7 @@ public final class HiveFilterPushdownDelegation
                 }
                 if (rowExpression instanceof VariableReferenceExpression) {
                     // get columnIndex, hiveType, typeName from TableScanNode.assignments
+                    // todo: this is non-projected column Id
                     HiveColumnHandle hiveColumnHandle = getColumnHandle(
                             (VariableReferenceExpression) rowExpression,
                             (TableScanNode) filterNode.getSource());
@@ -218,17 +219,23 @@ public final class HiveFilterPushdownDelegation
         return objectNode;
     }
 
-    public static String toJson(HiveTableLayoutHandle hiveTableLayoutHandle)
+    public static String toJson(HiveTableLayoutHandle hiveTableLayoutHandle, ProjectNode projectNode)
     {
+        TableScanNode tableScanNode = (TableScanNode) ((FilterNode) projectNode.getSource()).getSource();
+        Map<VariableReferenceExpression, ColumnHandle> map = tableScanNode.getAssignments();
         List<Column> dataColumns = hiveTableLayoutHandle.getDataColumns();
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode rootNode = objectMapper.createObjectNode();
         ObjectNode objectNode = objectMapper.createObjectNode();
         ArrayNode columns = objectMapper.createArrayNode();
+        Set<String> usedColumns = new java.util.HashSet<>();
+        map.forEach((k, v) -> usedColumns.add(k.getName()));
         for (Column column : dataColumns) {
             ObjectNode singleColumn = objectMapper.createObjectNode();
-            singleColumn.put(column.getName(), column.getType().toString().toUpperCase());
-            columns.add(singleColumn);
+            if (usedColumns.contains(column.getName())) {
+                singleColumn.put(column.getName(), column.getType().toString().toUpperCase());
+                columns.add(singleColumn);
+            }
         }
         rootNode.put("Table", hiveTableLayoutHandle.getSchemaTableName().getTableName());
         rootNode.set("Columns", columns);
