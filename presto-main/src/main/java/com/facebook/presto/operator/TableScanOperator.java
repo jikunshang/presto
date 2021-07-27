@@ -318,7 +318,7 @@ public class TableScanOperator
         }
 
         Page output = null;
-        long ptr = CiderJNI.init();
+        long ptr = CiderJNI.getPtr();
         try {
             Unsafe unsafe = getUnsafe();
             for (int i = 0; i < count; i++) {
@@ -417,7 +417,7 @@ public class TableScanOperator
             e.printStackTrace();
         }
 
-        CiderJNI.close(ptr);
+//        CiderJNI.close(ptr);
         return output;
     }
 
