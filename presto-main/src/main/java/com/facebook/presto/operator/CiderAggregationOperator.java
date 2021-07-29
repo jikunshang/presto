@@ -15,10 +15,6 @@
 package com.facebook.presto.operator;
 
 import com.facebook.presto.common.Page;
-import com.facebook.presto.common.PageBuilder;
-import com.facebook.presto.common.block.BlockBuilder;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.memory.context.LocalMemoryContext;
 import com.facebook.presto.operator.aggregation.AccumulatorFactory;
 import com.facebook.presto.spi.plan.AggregationNode.Step;
 import com.facebook.presto.spi.plan.PlanNodeId;
@@ -26,11 +22,10 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
-public class CiderAggregationOperator implements Operator
+public class CiderAggregationOperator
+        implements Operator
 {
     public static class CiderAggregationOperatorFactory
             implements OperatorFactory
@@ -52,56 +47,65 @@ public class CiderAggregationOperator implements Operator
         }
 
         @Override
-        public Operator createOperator(DriverContext driverContext) {
+        public Operator createOperator(DriverContext driverContext)
+        {
             return new CiderAggregationOperator();
         }
 
         @Override
-        public void noMoreOperators() {
-
+        public void noMoreOperators()
+        {
+            return;
         }
 
         @Override
-        public OperatorFactory duplicate() {
+        public OperatorFactory duplicate()
+        {
             return null;
         }
     }
 
-    public CiderAggregationOperator() {
+    public CiderAggregationOperator()
+    {
         // Do init cider runtime work here, I guess we need build schema info,
         // query info here, so current processBlock API may not work.
     }
 
     @Override
-    public OperatorContext getOperatorContext() {
+    public OperatorContext getOperatorContext()
+    {
         return null;
     }
 
     @Override
-    public boolean needsInput() {
+    public boolean needsInput()
+    {
         return false;
     }
 
     @Override
-    public void addInput(Page page) {
+    public void addInput(Page page)
+    {
         // ****************************
         // feed data to cider and do compute(optional, depends on execution model(TBD))
     }
 
     @Override
-    public Page getOutput() {
+    public Page getOutput()
+    {
         // get final cider compute result
         return null;
     }
 
     @Override
-    public void finish() {
+    public void finish()
+    {
         // equal to close? not sure.
-
     }
 
     @Override
-    public boolean isFinished() {
+    public boolean isFinished()
+    {
         return false;
     }
 }
