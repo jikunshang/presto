@@ -609,6 +609,8 @@ public class PlanOptimizers
         builder.add(new HashGenerationOptimizer(metadata.getFunctionAndTypeManager()));
         builder.add(new MetadataDeleteOptimizer(metadata));
 
+        // todo: add CiderOptimizer. is sequernce of optimizers important?
+
         // TODO: consider adding a formal final plan sanitization optimizer that prepares the plan for transmission/execution/logging
         // TODO: figure out how to improve the set flattening optimizer so that it can run at any point
         this.planningTimeOptimizers = builder.build();

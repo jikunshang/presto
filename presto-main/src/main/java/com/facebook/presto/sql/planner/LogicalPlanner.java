@@ -183,10 +183,12 @@ public class LogicalPlanner
 
     public Plan plan(Analysis analysis, Stage stage)
     {
+        // this is un optimized plan
         PlanNode root = planStatement(analysis, analysis.getStatement());
 
         planChecker.validateIntermediatePlan(root, session, metadata, sqlParser, variableAllocator.getTypes(), warningCollector);
 
+        // do optimization
         if (stage.ordinal() >= Stage.OPTIMIZED.ordinal()) {
             for (PlanOptimizer optimizer : planOptimizers) {
                 root = optimizer.optimize(root, session, variableAllocator.getTypes(), variableAllocator, idAllocator, warningCollector);
