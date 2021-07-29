@@ -51,8 +51,8 @@ import com.facebook.presto.metadata.ConnectorMetadataUpdaterManager;
 import com.facebook.presto.metadata.FunctionAndTypeManager;
 import com.facebook.presto.metadata.Metadata;
 import com.facebook.presto.operator.AggregationOperator.AggregationOperatorFactory;
-import com.facebook.presto.operator.CiderAggregationOperator.CiderAggregationOperatorFactory;
 import com.facebook.presto.operator.AssignUniqueIdOperator;
+import com.facebook.presto.operator.CiderAggregationOperator.CiderAggregationOperatorFactory;
 import com.facebook.presto.operator.DeleteOperator.DeleteOperatorFactory;
 import com.facebook.presto.operator.DevNullOperator.DevNullOperatorFactory;
 import com.facebook.presto.operator.DriverFactory;
@@ -837,12 +837,13 @@ public class LocalExecutionPlanner
         }
 
         // TODO: how call visitCiderAgg
-        public PhysicalOperation visitCiderAgg(AggregationNode node, LocalExecutionPlanContext context) {
+        public PhysicalOperation visitCiderAgg(AggregationNode node, LocalExecutionPlanContext context)
+        {
             PhysicalOperation source = node.getSource().accept(this, context);
 
             return planCiderAggregation(node, source, context);
-
         }
+
         private PhysicalOperation planCiderAggregation(AggregationNode node, PhysicalOperation source,
                                                    LocalExecutionPlanContext context)
         {
@@ -1258,6 +1259,10 @@ public class LocalExecutionPlanner
         @Override
         public PhysicalOperation visitAggregation(AggregationNode node, LocalExecutionPlanContext context)
         {
+            boolean ciderEnable = false;
+            if (ciderEnable) {
+                return visitCiderAgg(node, context);
+            }
             PhysicalOperation source = node.getSource().accept(this, context);
 
             if (node.getGroupingKeys().isEmpty()) {
