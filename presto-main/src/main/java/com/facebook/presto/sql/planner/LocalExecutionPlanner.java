@@ -51,6 +51,7 @@ import com.facebook.presto.metadata.ConnectorMetadataUpdaterManager;
 import com.facebook.presto.metadata.FunctionAndTypeManager;
 import com.facebook.presto.metadata.Metadata;
 import com.facebook.presto.operator.AggregationOperator.AggregationOperatorFactory;
+import com.facebook.presto.operator.CiderAggregationOperator.CiderAggregationOperatorFactory;
 import com.facebook.presto.operator.AssignUniqueIdOperator;
 import com.facebook.presto.operator.DeleteOperator.DeleteOperatorFactory;
 import com.facebook.presto.operator.DevNullOperator.DevNullOperatorFactory;
@@ -833,6 +834,29 @@ public class LocalExecutionPlanner
             this.stageExecutionDescriptor = requireNonNull(stageExecutionDescriptor, "stageExecutionDescriptor is null");
             this.remoteSourceFactory = requireNonNull(remoteSourceFactory, "remoteSourceFactory is null");
             this.pageSinkCommitRequired = pageSinkCommitRequired;
+        }
+
+        // TODO: how call visitCiderAgg
+        public PhysicalOperation visitCiderAgg(AggregationNode node, LocalExecutionPlanContext context) {
+            PhysicalOperation source = node.getSource().accept(this, context);
+
+            return planCiderAggregation(node, source, context);
+
+        }
+        private PhysicalOperation planCiderAggregation(AggregationNode node, PhysicalOperation source,
+                                                   LocalExecutionPlanContext context)
+        {
+            ImmutableMap.Builder<VariableReferenceExpression, Integer> outputMappings = ImmutableMap.builder();
+            CiderAggregationOperatorFactory operatorFactory = createCiderAggregationOperatorFactory(
+                    node.getId(),
+                    node.getAggregations(), // this contains all agg info
+                    node.getStep(),
+                    0,
+                    outputMappings,
+                    source,
+                    context,
+                    node.getStep().isOutputPartial());
+            return new PhysicalOperation(operatorFactory, outputMappings.build(), context, source);
         }
 
         @Override
@@ -3009,6 +3033,28 @@ public class LocalExecutionPlanner
                     context,
                     node.getStep().isOutputPartial());
             return new PhysicalOperation(operatorFactory, outputMappings.build(), context, source);
+        }
+
+        private CiderAggregationOperatorFactory createCiderAggregationOperatorFactory(
+                PlanNodeId planNodeId,
+                Map<VariableReferenceExpression, Aggregation> aggregations,
+                Step step,
+                int startOutputChannel,
+                ImmutableMap.Builder<VariableReferenceExpression, Integer> outputMappings,
+                PhysicalOperation source,
+                LocalExecutionPlanContext context,
+                boolean useSystemMemory)
+        {
+            int outputChannel = startOutputChannel;
+            ImmutableList.Builder<AccumulatorFactory> accumulatorFactories = ImmutableList.builder();
+            for (Map.Entry<VariableReferenceExpression, Aggregation> entry : aggregations.entrySet()) {
+                VariableReferenceExpression variable = entry.getKey();
+                Aggregation aggregation = entry.getValue();
+                accumulatorFactories.add(buildAccumulatorFactory(source, aggregation, false));
+                outputMappings.put(variable, outputChannel); // one aggregation per channel
+                outputChannel++;
+            }
+            return new CiderAggregationOperatorFactory(context.getNextOperatorId(), planNodeId, step, accumulatorFactories.build(), useSystemMemory);
         }
 
         private AggregationOperatorFactory createAggregationOperatorFactory(
