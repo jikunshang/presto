@@ -856,7 +856,8 @@ public class LocalExecutionPlanner
                     outputMappings,
                     source,
                     context,
-                    node.getStep().isOutputPartial());
+                    node.getStep().isOutputPartial(),
+                    node);
             return new PhysicalOperation(operatorFactory, outputMappings.build(), context, source);
         }
 
@@ -1259,6 +1260,7 @@ public class LocalExecutionPlanner
         @Override
         public PhysicalOperation visitAggregation(AggregationNode node, LocalExecutionPlanContext context)
         {
+            // TODO: hard code, will create Optimizer to refactor.
             boolean ciderEnable = false;
             if (ciderEnable) {
                 return visitCiderAgg(node, context);
@@ -3048,7 +3050,8 @@ public class LocalExecutionPlanner
                 ImmutableMap.Builder<VariableReferenceExpression, Integer> outputMappings,
                 PhysicalOperation source,
                 LocalExecutionPlanContext context,
-                boolean useSystemMemory)
+                boolean useSystemMemory,
+                AggregationNode node)
         {
             int outputChannel = startOutputChannel;
             ImmutableList.Builder<AccumulatorFactory> accumulatorFactories = ImmutableList.builder();
@@ -3059,7 +3062,8 @@ public class LocalExecutionPlanner
                 outputMappings.put(variable, outputChannel); // one aggregation per channel
                 outputChannel++;
             }
-            return new CiderAggregationOperatorFactory(context.getNextOperatorId(), planNodeId, step, accumulatorFactories.build(), useSystemMemory);
+            return new CiderAggregationOperatorFactory(context.getNextOperatorId(), planNodeId, step,
+                    accumulatorFactories.build(), useSystemMemory, node);
         }
 
         private AggregationOperatorFactory createAggregationOperatorFactory(

@@ -16,12 +16,14 @@ package com.facebook.presto.operator;
 
 import com.facebook.presto.common.Page;
 import com.facebook.presto.operator.aggregation.AccumulatorFactory;
+import com.facebook.presto.spi.plan.AggregationNode;
 import com.facebook.presto.spi.plan.AggregationNode.Step;
 import com.facebook.presto.spi.plan.PlanNodeId;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
 
 public class CiderAggregationOperator
@@ -36,51 +38,81 @@ public class CiderAggregationOperator
         private final List<AccumulatorFactory> accumulatorFactories;
         private final boolean useSystemMemory;
         private boolean closed;
+        private AggregationNode node;
 
-        public CiderAggregationOperatorFactory(int operatorId, PlanNodeId planNodeId, Step step, List<AccumulatorFactory> accumulatorFactories, boolean useSystemMemory)
+        public CiderAggregationOperatorFactory(int operatorId, PlanNodeId planNodeId, Step step,
+                                               List<AccumulatorFactory> accumulatorFactories,
+                                               boolean useSystemMemory, AggregationNode node)
         {
             this.operatorId = operatorId;
             this.planNodeId = requireNonNull(planNodeId, "planNodeId is null");
             this.step = step;
             this.accumulatorFactories = ImmutableList.copyOf(accumulatorFactories);
             this.useSystemMemory = useSystemMemory;
+            this.node = node;
         }
 
         @Override
         public Operator createOperator(DriverContext driverContext)
         {
-            return new CiderAggregationOperator();
+            checkState(!closed, "Factory is already closed");
+            OperatorContext operatorContext = driverContext.addOperatorContext(operatorId, planNodeId, AggregationOperator.class.getSimpleName());
+            // TODO: add more case
+            boolean useCiderPlan = step == Step.PARTIAL;
+            if (useCiderPlan) {
+                return new CiderAggregationOperator(operatorContext, node);
+            }
+            else { // fallback, same as `AggregationOperatorFactory`
+                return new AggregationOperator(operatorContext, step, accumulatorFactories, useSystemMemory);
+            }
         }
 
         @Override
         public void noMoreOperators()
         {
-            return;
+            closed = true;
         }
 
         @Override
         public OperatorFactory duplicate()
         {
-            return null;
+            return new CiderAggregationOperatorFactory(operatorId, planNodeId, step,
+                    accumulatorFactories, useSystemMemory, node);
         }
     }
 
-    public CiderAggregationOperator()
+    private AggregationNode node;
+    private String ciderPlan;
+
+    private enum State
+    {
+        NEEDS_INPUT,
+        HAS_OUTPUT,
+        FINISHED
+    }
+    private State state = State.NEEDS_INPUT;
+
+    private final OperatorContext operatorContext;
+
+    public CiderAggregationOperator(OperatorContext operatorContext, AggregationNode node)
     {
         // Do init cider runtime work here, I guess we need build schema info,
         // query info here, so current processBlock API may not work.
+        this.node = node;
+//        ciderPlan = PrestoPlanBuilder.toSchemaJson(node);
+        this.operatorContext = requireNonNull(operatorContext, "operatorContext is null");
     }
 
     @Override
     public OperatorContext getOperatorContext()
     {
-        return null;
+        return operatorContext;
     }
 
     @Override
     public boolean needsInput()
     {
-        return false;
+        return state == State.NEEDS_INPUT;
     }
 
     @Override
@@ -94,18 +126,22 @@ public class CiderAggregationOperator
     public Page getOutput()
     {
         // get final cider compute result
-        return null;
+//        return null;
+        throw new UnsupportedOperationException("Not implement yet");
     }
 
     @Override
     public void finish()
     {
         // equal to close? not sure.
+        if (state == State.NEEDS_INPUT) {
+            state = State.HAS_OUTPUT;
+        }
     }
 
     @Override
     public boolean isFinished()
     {
-        return false;
+        return state == State.FINISHED;
     }
 }
