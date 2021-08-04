@@ -109,6 +109,12 @@ public class CiderAggregationOperator
 
     }
 
+    // TODO: how to deconstruct Cider Instance.
+    protected void finalize() {
+        System.err.println("yes we are closing");
+        CiderJNI.close(ciderPtr);
+    }
+
     @Override
     public OperatorContext getOperatorContext()
     {
@@ -134,6 +140,9 @@ public class CiderAggregationOperator
     @Override
     public Page getOutput()
     {
+        // TODO: remove this. close will kill calcite process. UT will hang if we don't call close.
+        CiderJNI.close(ciderPtr);
+
         // get final result
         throw new UnsupportedOperationException("Not implement yet");
     }
