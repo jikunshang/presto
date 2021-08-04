@@ -20,6 +20,7 @@ import com.facebook.presto.spi.plan.AggregationNode;
 import com.facebook.presto.spi.plan.AggregationNode.Step;
 import com.facebook.presto.spi.plan.PlanNodeId;
 import com.google.common.collect.ImmutableList;
+import com.mapd.CiderJNI;
 
 import java.util.List;
 
@@ -93,14 +94,19 @@ public class CiderAggregationOperator
     private State state = State.NEEDS_INPUT;
 
     private final OperatorContext operatorContext;
+    private long ciderPtr = 0;
 
     public CiderAggregationOperator(OperatorContext operatorContext, AggregationNode node)
     {
         // Do init cider runtime work here, I guess we need build schema info,
         // query info here, so current processBlock API may not work.
         this.node = node;
-//        ciderPlan = PrestoPlanBuilder.toSchemaJson(node);
         this.operatorContext = requireNonNull(operatorContext, "operatorContext is null");
+        // make sure your env is ready, otherwise it will throw UnsatisfiedLinkError
+        ciderPtr = CiderJNI.getPtr();
+        // ciderPlan = PrestoPlanBuilder.toSchemaJson(node);
+        // CiderJNI.setSchema(ciderPlan);
+
     }
 
     @Override
@@ -118,15 +124,17 @@ public class CiderAggregationOperator
     @Override
     public void addInput(Page page)
     {
-        // ****************************
-        // feed data to cider and do compute(optional, depends on execution model(TBD))
+        // convert Page to off-heap buffer (blocking)
+
+        // call JNI API and get batch result
+
+        // merge batch result
     }
 
     @Override
     public Page getOutput()
     {
-        // get final cider compute result
-//        return null;
+        // get final result
         throw new UnsupportedOperationException("Not implement yet");
     }
 
