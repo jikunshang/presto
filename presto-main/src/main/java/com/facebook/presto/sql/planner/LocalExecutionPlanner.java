@@ -1261,7 +1261,7 @@ public class LocalExecutionPlanner
         public PhysicalOperation visitAggregation(AggregationNode node, LocalExecutionPlanContext context)
         {
             // TODO: hard code, will create Optimizer to refactor.
-            boolean ciderEnable = false;
+            boolean ciderEnable = true;
             if (ciderEnable) {
                 return visitCiderAgg(node, context);
             }

@@ -118,4 +118,13 @@ public class PageConvertor
         }
         return new Page(positionCount, blocks);
     }
+
+    public static long[] allocateBuffers(int bufferCount, int bufferSize)
+    {
+        long[] buffers = new long[bufferCount];
+        for (int i = 0; i < bufferCount; i++) {
+            buffers[i] = _UNSAFE.allocateMemory(bufferSize);
+        }
+        return buffers;
+    }
 }
