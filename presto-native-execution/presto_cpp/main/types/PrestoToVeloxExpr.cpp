@@ -12,10 +12,12 @@
  * limitations under the License.
  */
 
-#include "presto_cpp/main/types/PrestoToVeloxExpr.h"
+#include "src/types/PrestoToVeloxExpr.h"
+
 #include <boost/algorithm/string/case_conv.hpp>
-#include "presto_cpp/main/types/ParseTypeSignature.h"
-#include "presto_cpp/presto_protocol/Base64Util.h"
+
+#include "src/types/ParseTypeSignature.h"
+#include "src/protocol/Base64Util.h"
 #include "velox/common/base/Exceptions.h"
 #include "velox/vector/ComplexVector.h"
 #include "velox/vector/ConstantVector.h"
@@ -24,7 +26,7 @@
 using namespace facebook::velox::core;
 using facebook::velox::TypeKind;
 
-namespace facebook::presto {
+namespace io::trino {
 namespace {
 
 template <typename T>
@@ -257,6 +259,7 @@ std::optional<TypedExprPtr> tryConvertLiteralArray(
 }
 } // namespace
 
+/* 
 std::optional<TypedExprPtr> VeloxExprConverter::tryConvertDate(
     const protocol::CallExpression& pexpr) const {
   static const char* kDate = "presto.default.date";
@@ -277,7 +280,9 @@ std::optional<TypedExprPtr> VeloxExprConverter::tryConvertDate(
   auto returnType = parseTypeSignature(pexpr.returnType);
   return std::make_shared<CastTypedExpr>(returnType, args, false);
 }
+*/
 
+/*
 std::optional<TypedExprPtr> VeloxExprConverter::tryConvertLike(
     const protocol::CallExpression& pexpr) const {
   static const char* kLike = "presto.default.like";
@@ -328,16 +333,19 @@ std::optional<TypedExprPtr> VeloxExprConverter::tryConvertLike(
   return std::make_shared<CallTypedExpr>(
       returnType, args, getFunctionName(signature));
 }
+*/
 
 TypedExprPtr VeloxExprConverter::toVeloxExpr(
     const protocol::CallExpression& pexpr) const {
   if (auto builtin = std::dynamic_pointer_cast<protocol::BuiltInFunctionHandle>(
           pexpr.functionHandle)) {
+    /*
     // Handle some special parsing needed for 'like' operator signatures.
     auto like = tryConvertLike(pexpr);
     if (like.has_value()) {
       return like.value();
     }
+    */
 
     // 'date' operators need to be converted to a cast expression for date.
     auto date = tryConvertDate(pexpr);
@@ -367,7 +375,8 @@ TypedExprPtr VeloxExprConverter::toVeloxExpr(
     auto returnType = parseTypeSignature(pexpr.returnType);
     return std::make_shared<CallTypedExpr>(
         returnType, args, getFunctionName(signature));
-
+  }
+  /*
   } else if (
       auto sqlFunctionHandle =
           std::dynamic_pointer_cast<protocol::SqlFunctionHandle>(
@@ -377,6 +386,7 @@ TypedExprPtr VeloxExprConverter::toVeloxExpr(
     return std::make_shared<CallTypedExpr>(
         returnType, args, getFunctionName(sqlFunctionHandle->functionId));
   }
+  */
 
   VELOX_FAIL("Unsupported function handle: {}", pexpr.functionHandle->_type);
 }
@@ -653,6 +663,7 @@ std::shared_ptr<const FieldAccessTypedExpr> VeloxExprConverter::toVeloxExpr(
       parseTypeSignature(pexpr->type), pexpr->name);
 }
 
+/*
 std::shared_ptr<const LambdaTypedExpr> VeloxExprConverter::toVeloxExpr(
     std::shared_ptr<protocol::LambdaDefinitionExpression> lambda) const {
   std::vector<velox::TypePtr> argumentTypes;
@@ -665,6 +676,7 @@ std::shared_ptr<const LambdaTypedExpr> VeloxExprConverter::toVeloxExpr(
   return std::make_shared<LambdaTypedExpr>(
       signature, toVeloxExpr(lambda->body));
 }
+*/
 
 std::shared_ptr<const FieldAccessTypedExpr> VeloxExprConverter::toVeloxExpr(
     const protocol::VariableReferenceExpression& pexpr) const {
@@ -690,14 +702,16 @@ TypedExprPtr VeloxExprConverter::toVeloxExpr(
               pexpr)) {
     return toVeloxExpr(variable);
   }
+  /*
   if (auto lambda =
           std::dynamic_pointer_cast<protocol::LambdaDefinitionExpression>(
               pexpr)) {
     return toVeloxExpr(lambda);
   }
+  */
 
   throw std::invalid_argument(
       "Unsupported RowExpression type: " + pexpr->_type);
 }
 
-} // namespace facebook::presto
+} // namespace io::trino

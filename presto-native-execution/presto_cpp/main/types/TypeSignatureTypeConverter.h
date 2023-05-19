@@ -16,11 +16,12 @@
 
 #include "velox/type/Type.h"
 
-#include "presto_cpp/main/types/antlr/TypeSignatureBaseVisitor.h"
+#include "src/types/antlr/TypeSignatureBaseVisitor.h"
 
-namespace facebook {
-namespace presto {
+namespace io {
+namespace trino {
 using namespace type;
+using namespace facebook;
 
 class TypeSignatureTypeConverter : TypeSignatureBaseVisitor {
   virtual antlrcpp::Any visitStart(
@@ -64,5 +65,5 @@ velox::TypePtr mapFromKeyValueType(
     velox::TypePtr valueType);
 velox::TypePtr arrayFromType(velox::TypePtr valueType);
 
-} // namespace presto
-} // namespace facebook
+} // namespace io
+} // namespace trino

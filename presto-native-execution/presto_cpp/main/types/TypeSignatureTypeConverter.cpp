@@ -14,16 +14,16 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 
-#include <antlr4-runtime/antlr4-runtime.h>
-#include "presto_cpp/main/types/ParseTypeSignature.h"
-#include "presto_cpp/main/types/TypeSignatureTypeConverter.h"
-#include "presto_cpp/main/types/antlr/TypeSignatureLexer.h"
+#include "src/types/ParseTypeSignature.h"
+#include "antlr4-runtime.h"
+#include "src/types/TypeSignatureTypeConverter.h"
+#include "src/types/antlr/TypeSignatureLexer.h"
 #include "velox/functions/prestosql/types/HyperLogLogType.h"
 #include "velox/functions/prestosql/types/JsonType.h"
 #include "velox/functions/prestosql/types/TimestampWithTimeZoneType.h"
 
 using namespace facebook::velox;
-namespace facebook::presto {
+namespace io::trino {
 
 TypePtr parseTypeSignature(const std::string& signature) {
   return TypeSignatureTypeConverter::parse(signature);
@@ -185,4 +185,4 @@ TypePtr mapFromKeyValueType(TypePtr keyType, TypePtr valueType) {
 TypePtr arrayFromType(TypePtr valueType) {
   return TypeFactory<TypeKind::ARRAY>::create(valueType);
 }
-} // namespace facebook::presto
+} // namespace io::trino

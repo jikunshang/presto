@@ -13,7 +13,7 @@
  */
 
 #include <boost/algorithm/string.hpp>
-#include "presto_cpp/main/types/TypeSignatureTypeConverter.h"
+#include "src/types/TypeSignatureTypeConverter.h"
 
 // Generated from TypeSignature.g4 by ANTLR 4.9.3
 
@@ -22,7 +22,7 @@
 #include "TypeSignatureParser.h"
 
 using namespace antlrcpp;
-using namespace facebook::presto::type;
+using namespace io::trino::type;
 using namespace antlr4;
 
 TypeSignatureParser::TypeSignatureParser(TokenStream* input) : Parser(input) {

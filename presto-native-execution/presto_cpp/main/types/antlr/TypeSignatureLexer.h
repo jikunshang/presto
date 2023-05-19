@@ -18,7 +18,7 @@
 
 #include "antlr4-runtime.h"
 
-namespace facebook::presto::type {
+namespace io::trino::type {
 
 class TypeSignatureLexer : public antlr4::Lexer {
  public:
@@ -78,4 +78,4 @@ class TypeSignatureLexer : public antlr4::Lexer {
   static Initializer _init;
 };
 
-} // namespace facebook::presto::type
+} // namespace io::trino::type

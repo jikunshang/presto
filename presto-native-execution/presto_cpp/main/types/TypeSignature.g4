@@ -2,7 +2,7 @@ grammar TypeSignature;
 
 @parser::header {
     #include <boost/algorithm/string.hpp>
-    #include "presto_cpp/main/types/TypeSignatureTypeConverter.h"
+    #include "src/types/TypeSignatureTypeConverter.h"
 }
 
 @parser::declarations {

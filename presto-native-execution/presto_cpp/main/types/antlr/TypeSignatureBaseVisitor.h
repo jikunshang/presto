@@ -13,16 +13,16 @@
  */
 
 #include <boost/algorithm/string.hpp>
-#include "presto_cpp/main/types/TypeSignatureTypeConverter.h"
+#include "src/types/TypeSignatureTypeConverter.h"
 
 // Generated from TypeSignature.g4 by ANTLR 4.9.3
 
 #pragma once
 
 #include "antlr4-runtime.h"
-#include "presto_cpp/main/types/antlr/TypeSignatureVisitor.h"
+#include "src/types/antlr/TypeSignatureVisitor.h"
 
-namespace facebook::presto::type {
+namespace io::trino::type {
 
 /**
  * This class provides an empty implementation of TypeSignatureVisitor, which
@@ -92,4 +92,4 @@ class TypeSignatureBaseVisitor : public TypeSignatureVisitor {
   }
 };
 
-} // namespace facebook::presto::type
+} // namespace io::trino::type

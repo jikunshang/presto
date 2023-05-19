@@ -18,7 +18,7 @@
 
 using namespace antlr4;
 
-using namespace facebook::presto::type;
+using namespace io::trino::type;
 
 TypeSignatureLexer::TypeSignatureLexer(CharStream* input) : Lexer(input) {
   _interpreter = new atn::LexerATNSimulator(

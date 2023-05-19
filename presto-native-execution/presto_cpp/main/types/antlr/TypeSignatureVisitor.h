@@ -13,7 +13,7 @@
  */
 
 #include <boost/algorithm/string.hpp>
-#include "presto_cpp/main/types/TypeSignatureTypeConverter.h"
+#include "src/types/TypeSignatureTypeConverter.h"
 
 // Generated from TypeSignature.g4 by ANTLR 4.9.3
 
@@ -22,7 +22,7 @@
 #include "TypeSignatureParser.h"
 #include "antlr4-runtime.h"
 
-namespace facebook::presto::type {
+namespace io::trino::type {
 
 /**
  * This class defines an abstract visitor for a parse tree
@@ -70,4 +70,4 @@ class TypeSignatureVisitor : public antlr4::tree::AbstractParseTreeVisitor {
       TypeSignatureParser::IdentifierContext* context) = 0;
 };
 
-} // namespace facebook::presto::type
+} // namespace io::trino::type

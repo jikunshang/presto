@@ -15,7 +15,7 @@
 #include <folly/Conv.h>
 #include <string>
 
-namespace facebook::presto {
+namespace io::trino {
 class PrestoTaskId {
  public:
   explicit PrestoTaskId(const std::string& taskId) {
@@ -69,4 +69,4 @@ class PrestoTaskId {
   int32_t stageExecutionId_;
   int32_t id_;
 };
-} // namespace facebook::presto
+} // namespace io::trino

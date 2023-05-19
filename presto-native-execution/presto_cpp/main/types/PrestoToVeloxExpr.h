@@ -14,10 +14,12 @@
 #pragma once
 
 #include <stdexcept>
-#include "presto_cpp/presto_protocol/presto_protocol.h"
+
+#include "src/protocol/trino_protocol.h"
 #include "velox/core/Expressions.h"
 
-namespace facebook::presto {
+namespace io::trino {
+using namespace facebook; // TODO: Remove it, for temporary use.
 
 class VeloxExprConverter {
  public:
@@ -32,8 +34,10 @@ class VeloxExprConverter {
   velox::core::FieldAccessTypedExprPtr toVeloxExpr(
       std::shared_ptr<protocol::VariableReferenceExpression> pexpr) const;
 
+  /* TODO: Enable it after supported.
   std::shared_ptr<const velox::core::LambdaTypedExpr> toVeloxExpr(
       std::shared_ptr<protocol::LambdaDefinitionExpression> pexpr) const;
+  */
 
   // TODO Remove when protocols are updated to use shared_ptr
   std::shared_ptr<const velox::core::FieldAccessTypedExpr> toVeloxExpr(
@@ -54,13 +58,15 @@ class VeloxExprConverter {
   std::vector<velox::core::TypedExprPtr> toVeloxExpr(
       std::vector<std::shared_ptr<protocol::RowExpression>> pexpr) const;
 
+  /*
   std::optional<velox::core::TypedExprPtr> tryConvertLike(
       const protocol::CallExpression& pexpr) const;
 
+  */
   std::optional<velox::core::TypedExprPtr> tryConvertDate(
       const protocol::CallExpression& pexpr) const;
 
   velox::memory::MemoryPool* pool_;
 };
 
-} // namespace facebook::presto
+} // namespace io::trino
