@@ -30,21 +30,13 @@
 #   add_subdirectory(tests)
 # endif()
 
-add_library(
-  presto_type_converter OBJECT
-  TypeSignatureTypeConverter.cpp antlr/TypeSignatureLexer.cpp
-  antlr/TypeSignatureParser.cpp)
-
-set(Antlr4_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/antlr4-cpp-runtime/runtime/src)
-
-target_link_libraries(presto_type_converter velox_type)
-target_include_directories(presto_type_converter SYSTEM PRIVATE ${Antlr4_INCLUDE_DIRS})
-
-add_library(presto_types OBJECT PrestoToVeloxQueryPlan.cpp
-                                PrestoToVeloxExpr.cpp)
+add_library(presto_type_converter OBJECT PrestoToVeloxQueryPlan.cpp
+                                PrestoToVeloxExpr.cpp
+                                TypeSignatureTypeConverter.cpp 
+                                antlr/TypeSignatureParser.cpp
+                                antlr/TypeSignatureLexer.cpp)
                                 
-add_dependencies(presto_types presto_type_converter velox_type
-                 velox_dwio_dwrf_proto)
+add_dependencies(presto_type_converter velox_type velox_dwio_dwrf_proto)
 
-target_link_libraries(presto_types antlr4_static presto_type_converter velox_tpch_gen)
-target_include_directories(presto_types SYSTEM PRIVATE ${Protobuf_INCLUDE_DIRS}  ${Antlr4_INCLUDE_DIRS})
+target_link_libraries(presto_type_converter antlr4_static velox_tpch_connector velox_tpch_gen velox_type)
+target_include_directories(presto_type_converter SYSTEM PRIVATE ${Protobuf_INCLUDE_DIRS}  ${Antlr4_INCLUDE_DIRS})

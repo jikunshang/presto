@@ -60,9 +60,8 @@ std::vector<std::string> getNames(const protocol::Assignments& assignments) {
   return names;
 }
 
-RowTypePtr toRowType(
-    const std::vector<protocol::VariableReferenceExpression>& variables,
-    const std::unordered_set<std::string>& excludeNames = {}) {
+RowTypePtr toRowType(const std::vector<protocol::VariableReferenceExpression>& variables,
+                     const std::unordered_set<std::string>& excludeNames = {}) {
   std::vector<std::string> names;
   std::vector<velox::TypePtr> types;
   names.reserve(variables.size());
@@ -124,14 +123,11 @@ std::shared_ptr<connector::ColumnHandle> toColumnHandle(
   }
   */
 
-  if (auto tpchColumn =
-          dynamic_cast<const protocol::TpchColumnHandle*>(column)) {
-    return std::make_shared<connector::tpch::TpchColumnHandle>(
-        tpchColumn->columnName);
+  if (auto tpchColumn = dynamic_cast<const protocol::TpchColumnHandle*>(column)) {
+    return std::make_shared<connector::tpch::TpchColumnHandle>(tpchColumn->columnName);
   }
 
-  VELOX_UNSUPPORTED(
-      "Unsupported column handle type: {}.", toJsonString(column->_type));
+  VELOX_UNSUPPORTED("Unsupported column handle type: {}.", toJsonString(column->_type));
 }
 
 /*
@@ -156,13 +152,10 @@ std::shared_ptr<connector::hive::LocationHandle> toLocationHandle(
 }
 */
 
-int64_t toInt64(
-    const std::shared_ptr<protocol::Block>& block,
-    const VeloxExprConverter& exprConverter,
-    const TypePtr& type) {
+int64_t toInt64(const std::shared_ptr<protocol::Block>& block,
+                const VeloxExprConverter& exprConverter, const TypePtr& type) {
   auto value = exprConverter.getConstantValue(type, *block);
-  return VariantConverter::convert<velox::TypeKind::BIGINT>(value)
-      .value<int64_t>();
+  return VariantConverter::convert<velox::TypeKind::BIGINT>(value).value<int64_t>();
 }
 
 /*
@@ -663,9 +656,8 @@ std::unique_ptr<common::Filter> toFilter(
       }
     }
     VELOX_UNSUPPORTED(
-        "EquatableValueSet (with non-empty entries) to Velox filter conversion is not supported yet.");
-  } else if (
-      auto allOrNoneValueSet =
+        "EquatableValueSet (with non-empty entries) to Velox filter conversion is not
+supported yet."); } else if ( auto allOrNoneValueSet =
           std::dynamic_pointer_cast<protocol::AllOrNoneValueSet>(
               domain.values)) {
     VELOX_UNSUPPORTED(
@@ -675,10 +667,8 @@ std::unique_ptr<common::Filter> toFilter(
 }
 */
 
-
 std::shared_ptr<connector::ConnectorTableHandle> toConnectorTableHandle(
-    const protocol::TableHandle& tableHandle,
-    const VeloxExprConverter& exprConverter,
+    const protocol::TableHandle& tableHandle, const VeloxExprConverter& exprConverter,
     std::unordered_map<std::string, std::shared_ptr<connector::ColumnHandle>>&
         partitionColumns) {
   /*
@@ -733,24 +723,17 @@ std::shared_ptr<connector::ConnectorTableHandle> toConnectorTableHandle(
   }
   */
 
-  // TODO: Fix this
-  /*
-  if (auto tpchLayout =
-          std::dynamic_pointer_cast<const protocol::TpchTableLayoutHandle>(
-              tableHandle.connectorTableLayout)) {
+  if (auto tpchTable = std::dynamic_pointer_cast<const protocol::TpchTableHandle>(
+          tableHandle.connectorHandle)) {
     return std::make_shared<connector::tpch::TpchTableHandle>(
-        tableHandle.connectorId,
-        tpch::fromTableName(tpchLayout->table.tableName),
-        tpchLayout->table.scaleFactor);
+        tableHandle.connectorId.catalogName, tpch::fromTableName(tpchTable->tableName),
+        tpchTable->scaleFactor);
   }
-  */
-  VELOX_UNSUPPORTED(
-      "Unsupported TableHandle type: {}.", toJsonString(tableHandle));
+  VELOX_UNSUPPORTED("Unsupported TableHandle type: {}.", toJsonString(tableHandle));
 }
 
-std::vector<core::TypedExprPtr> getProjections(
-    const VeloxExprConverter& exprConverter,
-    const protocol::Assignments& assignments) {
+std::vector<core::TypedExprPtr> getProjections(const VeloxExprConverter& exprConverter,
+                                               const protocol::Assignments& assignments) {
   std::vector<core::TypedExprPtr> expressions;
   expressions.reserve(assignments.assignments.size());
   for (const auto& assignment : assignments.assignments) {
@@ -761,10 +744,8 @@ std::vector<core::TypedExprPtr> getProjections(
 }
 
 template <TypeKind KIND>
-void setCellFromVariantByKind(
-    const VectorPtr& column,
-    vector_size_t row,
-    const velox::variant& value) {
+void setCellFromVariantByKind(const VectorPtr& column, vector_size_t row,
+                              const velox::variant& value) {
   using T = typename TypeTraits<KIND>::NativeType;
 
   auto flatVector = column->as<FlatVector<T>>();
@@ -772,27 +753,22 @@ void setCellFromVariantByKind(
 }
 
 template <>
-void setCellFromVariantByKind<TypeKind::VARBINARY>(
-    const VectorPtr& /*column*/,
-    vector_size_t /*row*/,
-    const velox::variant& value) {
+void setCellFromVariantByKind<TypeKind::VARBINARY>(const VectorPtr& /*column*/,
+                                                   vector_size_t /*row*/,
+                                                   const velox::variant& value) {
   VELOX_UNSUPPORTED("Return of VARBINARY data is not supported.");
 }
 
 template <>
-void setCellFromVariantByKind<TypeKind::VARCHAR>(
-    const VectorPtr& column,
-    vector_size_t row,
-    const velox::variant& value) {
+void setCellFromVariantByKind<TypeKind::VARCHAR>(const VectorPtr& column,
+                                                 vector_size_t row,
+                                                 const velox::variant& value) {
   auto values = column->as<FlatVector<StringView>>();
   values->set(row, StringView(value.value<Varchar>()));
 }
 
-void setCellFromVariant(
-    const RowVectorPtr& data,
-    vector_size_t row,
-    vector_size_t column,
-    const velox::variant& value) {
+void setCellFromVariant(const RowVectorPtr& data, vector_size_t row, vector_size_t column,
+                        const velox::variant& value) {
   auto columnVector = data->childAt(column);
   if (value.isNull()) {
     columnVector->setNull(row, true);
@@ -802,24 +778,18 @@ void setCellFromVariant(
     setCellFromVariantByKind<TypeKind::HUGEINT>(columnVector, row, value);
     return;
   }
-  VELOX_DYNAMIC_SCALAR_TYPE_DISPATCH(
-      setCellFromVariantByKind,
-      columnVector->typeKind(),
-      columnVector,
-      row,
-      value);
+  VELOX_DYNAMIC_SCALAR_TYPE_DISPATCH(setCellFromVariantByKind, columnVector->typeKind(),
+                                     columnVector, row, value);
 }
 
-void setCellFromVariant(
-    const VectorPtr& data,
-    vector_size_t row,
-    const velox::variant& value) {
+void setCellFromVariant(const VectorPtr& data, vector_size_t row,
+                        const velox::variant& value) {
   if (value.isNull()) {
     data->setNull(row, true);
     return;
   }
-  VELOX_DYNAMIC_SCALAR_TYPE_DISPATCH(
-      setCellFromVariantByKind, data->typeKind(), data, row, value);
+  VELOX_DYNAMIC_SCALAR_TYPE_DISPATCH(setCellFromVariantByKind, data->typeKind(), data,
+                                     row, value);
 }
 
 core::SortOrder toVeloxSortOrder(const protocol::SortOrder& sortOrder) {
@@ -880,10 +850,8 @@ std::vector<core::FieldAccessTypedExprPtr> toFieldExprs(
   for (auto& expr : expressions) {
     auto field = std::dynamic_pointer_cast<const core::FieldAccessTypedExpr>(
         exprConverter.toVeloxExpr(expr));
-    VELOX_CHECK_NOT_NULL(
-        field,
-        "Unexpected expression type: {}. Expected variable.",
-        expr->_type);
+    VELOX_CHECK_NOT_NULL(field, "Unexpected expression type: {}. Expected variable.",
+                         expr->_type);
     fields.emplace_back(std::move(field));
   }
   return fields;
@@ -896,14 +864,11 @@ std::vector<core::TypedExprPtr> toTypedExprs(
   typedExprs.reserve(expressions.size());
   for (auto& expr : expressions) {
     auto typedExpr = exprConverter.toVeloxExpr(expr);
-    auto field =
-        std::dynamic_pointer_cast<const core::FieldAccessTypedExpr>(typedExpr);
+    auto field = std::dynamic_pointer_cast<const core::FieldAccessTypedExpr>(typedExpr);
     if (field == nullptr) {
-      auto constant =
-          std::dynamic_pointer_cast<const core::ConstantTypedExpr>(typedExpr);
+      auto constant = std::dynamic_pointer_cast<const core::ConstantTypedExpr>(typedExpr);
       VELOX_CHECK_NOT_NULL(
-          constant,
-          "Unexpected expression type: {}. Expected variable or constant.",
+          constant, "Unexpected expression type: {}. Expected variable or constant.",
           expr->_type);
     }
     typedExprs.emplace_back(std::move(typedExpr));
@@ -912,8 +877,7 @@ std::vector<core::TypedExprPtr> toTypedExprs(
 }
 
 std::vector<column_index_t> toChannels(
-    const RowTypePtr& type,
-    const std::vector<core::FieldAccessTypedExprPtr>& fields) {
+    const RowTypePtr& type, const std::vector<core::FieldAccessTypedExprPtr>& fields) {
   std::vector<column_index_t> channels;
   channels.reserve(fields.size());
   for (const auto& field : fields) {
@@ -923,9 +887,7 @@ std::vector<column_index_t> toChannels(
   return channels;
 }
 
-column_index_t exprToChannel(
-    const core::ITypedExpr* expr,
-    const TypePtr& type) {
+column_index_t exprToChannel(const core::ITypedExpr* expr, const TypePtr& type) {
   if (auto field = dynamic_cast<const core::FieldAccessTypedExpr*>(expr)) {
     return type->as<TypeKind::ROW>().getChildIdx(field->name());
   }
@@ -933,7 +895,7 @@ column_index_t exprToChannel(
     return kConstantChannel;
   }
   VELOX_CHECK(false, "Expression must be field access or constant");
-  return 0; // not reached.
+  return 0;  // not reached.
 }
 
 /*
@@ -987,7 +949,7 @@ core::LocalPartitionNode::Type toLocalExchangeType(
 }
 */
 
-} // namespace
+}  // namespace
 
 /*
 core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
@@ -1072,15 +1034,12 @@ core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
 */
 
 namespace {
-bool equal(
-    const std::shared_ptr<protocol::RowExpression>& actual,
-    const protocol::VariableReferenceExpression& expected) {
+bool equal(const std::shared_ptr<protocol::RowExpression>& actual,
+           const protocol::VariableReferenceExpression& expected) {
   if (auto variableReference =
-          std::dynamic_pointer_cast<protocol::VariableReferenceExpression>(
-              actual)) {
-    return (
-        variableReference->name == expected.name &&
-        variableReference->type == expected.type);
+          std::dynamic_pointer_cast<protocol::VariableReferenceExpression>(actual)) {
+    return (variableReference->name == expected.name &&
+            variableReference->type == expected.type);
   }
   return false;
 }
@@ -1088,11 +1047,9 @@ bool equal(
 std::shared_ptr<protocol::CallExpression> isFunctionCall(
     const std::shared_ptr<protocol::RowExpression>& expression,
     const std::string_view& functionName) {
-  if (auto call =
-          std::dynamic_pointer_cast<protocol::CallExpression>(expression)) {
-    if (auto builtin =
-            std::dynamic_pointer_cast<protocol::BuiltInFunctionHandle>(
-                call->functionHandle)) {
+  if (auto call = std::dynamic_pointer_cast<protocol::CallExpression>(expression)) {
+    if (auto builtin = std::dynamic_pointer_cast<protocol::BuiltInFunctionHandle>(
+            call->functionHandle)) {
       if (builtin->signature.kind == protocol::FunctionKind::SCALAR &&
           builtin->signature.name == functionName) {
         return call;
@@ -1114,8 +1071,7 @@ std::shared_ptr<protocol::CallExpression> isNot(
 /// CallExpression. Returns nullptr if input expression is something else.
 std::shared_ptr<protocol::CallExpression> isGreaterThan(
     const std::shared_ptr<protocol::RowExpression>& expression) {
-  static const std::string_view kGreaterThan =
-      "presto.default.$operator$greater_than";
+  static const std::string_view kGreaterThan = "presto.default.$operator$greater_than";
   return isFunctionCall(expression, kGreaterThan);
 }
 
@@ -1140,8 +1096,7 @@ std::shared_ptr<const protocol::ExchangeNode> isLocalSingleSourceExchange(
 /// ProjectNode. Returns nullptr if input node is something else.
 std::shared_ptr<const protocol::ProjectNode> isIdentityProjection(
     const std::shared_ptr<const protocol::PlanNode>& node) {
-  if (auto project =
-          std::dynamic_pointer_cast<const protocol::ProjectNode>(node)) {
+  if (auto project = std::dynamic_pointer_cast<const protocol::ProjectNode>(node)) {
     for (auto entry : project->assignments.assignments) {
       if (!equal(entry.second, entry.first)) {
         return nullptr;
@@ -1152,7 +1107,7 @@ std::shared_ptr<const protocol::ProjectNode> isIdentityProjection(
 
   return nullptr;
 }
-} // namespace
+}  // namespace
 
 core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     const std::shared_ptr<const protocol::FilterNode>& node,
@@ -1245,8 +1200,7 @@ core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
   */
 
   return std::make_shared<core::FilterNode>(
-      node->id,
-      exprConverter_.toVeloxExpr(node->predicate),
+      node->id, exprConverter_.toVeloxExpr(node->predicate),
       toVeloxQueryPlan(node->source, tableWriteInfo, taskId));
 }
 
@@ -1348,8 +1302,7 @@ VeloxQueryPlanConverterBase::tryConvertOffsetLimit(
 }
 */
 
-std::shared_ptr<const core::ProjectNode>
-VeloxQueryPlanConverterBase::toVeloxQueryPlan(
+std::shared_ptr<const core::ProjectNode> VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     const std::shared_ptr<const protocol::ProjectNode>& node,
     const std::shared_ptr<protocol::TableWriteInfo>& tableWriteInfo,
     const protocol::TaskId& taskId) {
@@ -1360,8 +1313,7 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
   */
 
   return std::make_shared<core::ProjectNode>(
-      node->id,
-      getNames(node->assignments),
+      node->id, getNames(node->assignments),
       getProjections(exprConverter_, node->assignments),
       toVeloxQueryPlan(node->source, tableWriteInfo, taskId));
 }
@@ -1409,25 +1361,22 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
 }
 */
 
-std::shared_ptr<const core::TableScanNode>
-VeloxQueryPlanConverterBase::toVeloxQueryPlan(
+std::shared_ptr<const core::TableScanNode> VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     const std::shared_ptr<const protocol::TableScanNode>& node,
     const std::shared_ptr<protocol::TableWriteInfo>& /* tableWriteInfo */,
     const protocol::TaskId& taskId) {
   auto rowType = toRowType(node->outputVariables);
-  std::unordered_map<std::string, std::shared_ptr<connector::ColumnHandle>>
-      assignments;
+  std::unordered_map<std::string, std::shared_ptr<connector::ColumnHandle>> assignments;
   for (const auto& entry : node->assignments) {
     assignments.emplace(entry.first.name, toColumnHandle(entry.second.get()));
   }
   auto connectorTableHandle =
       toConnectorTableHandle(node->table, exprConverter_, assignments);
-  return std::make_shared<core::TableScanNode>(
-      node->id, rowType, connectorTableHandle, assignments);
+  return std::make_shared<core::TableScanNode>(node->id, rowType, connectorTableHandle,
+                                               assignments);
 }
 
-std::vector<core::FieldAccessTypedExprPtr>
-VeloxQueryPlanConverterBase::toVeloxExprs(
+std::vector<core::FieldAccessTypedExprPtr> VeloxQueryPlanConverterBase::toVeloxExprs(
     const std::vector<protocol::VariableReferenceExpression>& variables) {
   std::vector<core::FieldAccessTypedExprPtr> fields;
   fields.reserve(variables.size());
@@ -1450,9 +1399,8 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
   aggrMasks.reserve(node->aggregations.size());
   for (const auto& entry : node->aggregations) {
     aggregateNames.emplace_back(entry.first.name);
-    aggregates.emplace_back(
-        std::dynamic_pointer_cast<const core::CallTypedExpr>(
-            exprConverter_.toVeloxExpr(entry.second.call)));
+    aggregates.emplace_back(std::dynamic_pointer_cast<const core::CallTypedExpr>(
+        exprConverter_.toVeloxExpr(entry.second.call)));
     if (entry.second.mask == nullptr) {
       aggrMasks.emplace_back(nullptr);
     } else {
@@ -1479,19 +1427,15 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
   }
 
   bool streamable = !node->preGroupedVariables.empty() &&
-      node->groupingSets.groupingSetCount == 1 &&
-      node->groupingSets.globalGroupingSets.empty();
+                    node->groupingSets.groupingSetCount == 1 &&
+                    node->groupingSets.globalGroupingSets.empty();
 
   return std::make_shared<core::AggregationNode>(
-      node->id,
-      step,
-      toVeloxExprs(node->groupingSets.groupingKeys),
+      node->id, step, toVeloxExprs(node->groupingSets.groupingKeys),
       streamable ? toVeloxExprs(node->preGroupedVariables)
                  : std::vector<core::FieldAccessTypedExprPtr>{},
-      aggregateNames,
-      aggregates,
-      aggrMasks,
-      false, // ignoreNullKeys
+      aggregateNames, aggregates, aggrMasks,
+      false,  // ignoreNullKeys
       toVeloxQueryPlan(node->source, tableWriteInfo, taskId));
 }
 
@@ -1911,12 +1855,10 @@ core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     return toVeloxQueryPlan(exchange, tableWriteInfo, taskId);
   }
   */
-  if (auto filter =
-          std::dynamic_pointer_cast<const protocol::FilterNode>(node)) {
+  if (auto filter = std::dynamic_pointer_cast<const protocol::FilterNode>(node)) {
     return toVeloxQueryPlan(filter, tableWriteInfo, taskId);
   }
-  if (auto project =
-          std::dynamic_pointer_cast<const protocol::ProjectNode>(node)) {
+  if (auto project = std::dynamic_pointer_cast<const protocol::ProjectNode>(node)) {
     return toVeloxQueryPlan(project, tableWriteInfo, taskId);
   }
   /*
@@ -1925,8 +1867,7 @@ core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     return toVeloxQueryPlan(values, tableWriteInfo, taskId);
   }
   */
-  if (auto tableScan =
-          std::dynamic_pointer_cast<const protocol::TableScanNode>(node)) {
+  if (auto tableScan = std::dynamic_pointer_cast<const protocol::TableScanNode>(node)) {
     return toVeloxQueryPlan(tableScan, tableWriteInfo, taskId);
   }
   if (auto aggregation =
@@ -2042,8 +1983,7 @@ core::PlanFragment VeloxQueryPlanConverterBase::toVeloxQueryPlan(
   */
 
   auto partitioningScheme = fragment.partitioningScheme;
-  auto partitioningHandle =
-      partitioningScheme.partitioning.handle.connectorHandle;
+  auto partitioningHandle = partitioningScheme.partitioning.handle.connectorHandle;
 
   auto partitioningKeys =
       toTypedExprs(partitioningScheme.partitioning.arguments, exprConverter_);
@@ -2060,10 +2000,8 @@ core::PlanFragment VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     // For constant channels create a base vector, add single value to it from
     // our variant and add it to the list of constant expressions.
     if (channel == kConstantChannel) {
-      constValues.emplace_back(
-          velox::BaseVector::create(expr->type(), 1, pool_));
-      auto constExpr =
-          std::dynamic_pointer_cast<const core::ConstantTypedExpr>(expr);
+      constValues.emplace_back(velox::BaseVector::create(expr->type(), 1, pool_));
+      auto constExpr = std::dynamic_pointer_cast<const core::ConstantTypedExpr>(expr);
       setCellFromVariant(constValues.back(), 0, constExpr->value());
     }
   }
@@ -2074,11 +2012,10 @@ core::PlanFragment VeloxQueryPlanConverterBase::toVeloxQueryPlan(
               partitioningHandle)) {
     switch (systemPartitioningHandle->partitioning) {
       case protocol::SystemPartitioning::SINGLE:
-        VELOX_CHECK(
-            systemPartitioningHandle->function ==
-                protocol::SystemPartitionFunction::SINGLE,
-            "Unsupported partitioning function: {}",
-            toJsonString(systemPartitioningHandle->function));
+        VELOX_CHECK(systemPartitioningHandle->function ==
+                        protocol::SystemPartitionFunction::SINGLE,
+                    "Unsupported partitioning function: {}",
+                    toJsonString(systemPartitioningHandle->function));
         planFragment.planNode =
             core::PartitionedOutputNode::single("root", outputType, sourceNode);
         return planFragment;
@@ -2088,98 +2025,88 @@ core::PlanFragment VeloxQueryPlanConverterBase::toVeloxQueryPlan(
             auto numPartitions = partitioningScheme.bucketToPartition->size();
 
             if (numPartitions == 1) {
-              planFragment.planNode = core::PartitionedOutputNode::single(
-                  "root", outputType, sourceNode);
+              planFragment.planNode =
+                  core::PartitionedOutputNode::single("root", outputType, sourceNode);
               return planFragment;
             }
-            planFragment.planNode =
-                std::make_shared<core::PartitionedOutputNode>(
-                    "root",
-                    partitioningKeys,
-                    numPartitions,
-                    false, // broadcast
-                    partitioningScheme.replicateNullsAndAny,
-                    std::make_shared<RoundRobinPartitionFunctionSpec>(),
-                    outputType,
-                    sourceNode);
+            planFragment.planNode = std::make_shared<core::PartitionedOutputNode>(
+                "root", partitioningKeys, numPartitions,
+                false,  // broadcast
+                partitioningScheme.replicateNullsAndAny,
+                std::make_shared<RoundRobinPartitionFunctionSpec>(), outputType,
+                sourceNode);
             return planFragment;
           }
           case protocol::SystemPartitionFunction::HASH: {
             auto numPartitions = partitioningScheme.bucketToPartition->size();
 
             if (numPartitions == 1) {
-              planFragment.planNode = core::PartitionedOutputNode::single(
-                  "root", outputType, sourceNode);
+              planFragment.planNode =
+                  core::PartitionedOutputNode::single("root", outputType, sourceNode);
               return planFragment;
             }
-            planFragment.planNode =
-                std::make_shared<core::PartitionedOutputNode>(
-                    "root",
-                    partitioningKeys,
-                    numPartitions,
-                    false, // broadcast
-                    partitioningScheme.replicateNullsAndAny,
-                    std::make_shared<HashPartitionFunctionSpec>(
-                        inputType, keyChannels, constValues),
-                    outputType,
-                    sourceNode);
+            planFragment.planNode = std::make_shared<core::PartitionedOutputNode>(
+                "root", partitioningKeys, numPartitions,
+                false,  // broadcast
+                partitioningScheme.replicateNullsAndAny,
+                std::make_shared<HashPartitionFunctionSpec>(inputType, keyChannels,
+                                                            constValues),
+                outputType, sourceNode);
             return planFragment;
           }
           case protocol::SystemPartitionFunction::BROADCAST: {
-            planFragment.planNode = core::PartitionedOutputNode::broadcast(
-                "root", 1, outputType, sourceNode);
+            planFragment.planNode =
+                core::PartitionedOutputNode::broadcast("root", 1, outputType, sourceNode);
             return planFragment;
           }
           default:
-            VELOX_UNSUPPORTED(
-                "Unsupported partitioning function: {}",
-                toJsonString(systemPartitioningHandle->function));
+            VELOX_UNSUPPORTED("Unsupported partitioning function: {}",
+                              toJsonString(systemPartitioningHandle->function));
         }
       }
       default:
         VELOX_FAIL("Unsupported kind of SystemPartitioning");
     }
-  /*
-  } else if (
-      auto hivePartitioningHandle =
-          std::dynamic_pointer_cast<protocol::HivePartitioningHandle>(
-              partitioningHandle)) {
-    const auto& bucketToPartition = *partitioningScheme.bucketToPartition;
-    auto numPartitions =
-        *std::max_element(bucketToPartition.begin(), bucketToPartition.end()) +
-        1;
+    /*
+    } else if (
+        auto hivePartitioningHandle =
+            std::dynamic_pointer_cast<protocol::HivePartitioningHandle>(
+                partitioningHandle)) {
+      const auto& bucketToPartition = *partitioningScheme.bucketToPartition;
+      auto numPartitions =
+          *std::max_element(bucketToPartition.begin(), bucketToPartition.end()) +
+          1;
 
-    if (numPartitions == 1) {
-      planFragment.planNode =
-          core::PartitionedOutputNode::single("root", outputType, sourceNode);
+      if (numPartitions == 1) {
+        planFragment.planNode =
+            core::PartitionedOutputNode::single("root", outputType, sourceNode);
+        return planFragment;
+      }
+
+      VELOX_USER_CHECK(
+          hivePartitioningHandle->bucketFunctionType ==
+              protocol::BucketFunctionType::HIVE_COMPATIBLE,
+          "Unsupported Hive bucket function type: {}",
+          toJsonString(hivePartitioningHandle->bucketFunctionType))
+
+      planFragment.planNode = std::make_shared<core::PartitionedOutputNode>(
+          "root",
+          partitioningKeys,
+          numPartitions,
+          false, // broadcast
+          partitioningScheme.replicateNullsAndAny,
+          std::make_shared<HivePartitionFunctionSpec>(
+              hivePartitioningHandle->bucketCount,
+              bucketToPartition,
+              keyChannels,
+              constValues),
+          toRowType(partitioningScheme.outputLayout),
+          sourceNode);
       return planFragment;
-    }
-
-    VELOX_USER_CHECK(
-        hivePartitioningHandle->bucketFunctionType ==
-            protocol::BucketFunctionType::HIVE_COMPATIBLE,
-        "Unsupported Hive bucket function type: {}",
-        toJsonString(hivePartitioningHandle->bucketFunctionType))
-
-    planFragment.planNode = std::make_shared<core::PartitionedOutputNode>(
-        "root",
-        partitioningKeys,
-        numPartitions,
-        false, // broadcast
-        partitioningScheme.replicateNullsAndAny,
-        std::make_shared<HivePartitionFunctionSpec>(
-            hivePartitioningHandle->bucketCount,
-            bucketToPartition,
-            keyChannels,
-            constValues),
-        toRowType(partitioningScheme.outputLayout),
-        sourceNode);
-    return planFragment;
-  */
+    */
   } else {
-    VELOX_UNSUPPORTED(
-        "Unsupported partitioning handle: {}",
-        toJsonString(partitioningHandle));
+    VELOX_UNSUPPORTED("Unsupported partitioning handle: {}",
+                      toJsonString(partitioningHandle));
   }
 }
 
@@ -2293,4 +2220,4 @@ void registerPrestoPlanNodeSerDe() {
       "ShuffleWriteNode", presto::operators::ShuffleWriteNode::create);
 }
 */
-} // namespace io::trino
+}  // namespace io::trino

@@ -259,7 +259,6 @@ std::optional<TypedExprPtr> tryConvertLiteralArray(
 }
 } // namespace
 
-/* 
 std::optional<TypedExprPtr> VeloxExprConverter::tryConvertDate(
     const protocol::CallExpression& pexpr) const {
   static const char* kDate = "presto.default.date";
@@ -280,7 +279,6 @@ std::optional<TypedExprPtr> VeloxExprConverter::tryConvertDate(
   auto returnType = parseTypeSignature(pexpr.returnType);
   return std::make_shared<CastTypedExpr>(returnType, args, false);
 }
-*/
 
 /*
 std::optional<TypedExprPtr> VeloxExprConverter::tryConvertLike(

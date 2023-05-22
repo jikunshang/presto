@@ -16,11 +16,11 @@
 #include <vector>
 // #include "presto_cpp/main/operators/ShuffleInterface.h"
 #include "src/protocol/trino_protocol.h"
+#include "src/types/PrestoTaskId.h"
 #include "velox/core/Expressions.h"
 #include "velox/core/PlanFragment.h"
 #include "velox/core/PlanNode.h"
 #include "velox/type/Variant.h"
-#include "src/types/PrestoTaskId.h"
 // TypeSignatureTypeConverter.h must be included after presto_protocol.h
 // because it changes the macro EOF in some way (maybe deleting it?) which
 // is used in third_party/json/json.hpp
@@ -185,6 +185,13 @@ class VeloxInteractiveQueryPlanConverter : public VeloxQueryPlanConverterBase {
 
   explicit VeloxInteractiveQueryPlanConverter(velox::memory::MemoryPool* pool)
       : VeloxQueryPlanConverterBase(pool) {}
+
+  // tableWriteInfo only used by TableWrite
+  velox::core::PlanFragment toVeloxQueryPlan(
+      const protocol::PlanFragment& fragment,
+      const protocol::TaskId& taskId) {
+    return toVeloxQueryPlan(fragment, nullptr, taskId);
+  }
 
  protected:
   /*
