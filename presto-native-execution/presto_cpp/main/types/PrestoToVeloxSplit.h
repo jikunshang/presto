@@ -13,14 +13,14 @@
  */
 #pragma once
 
-#include "presto_cpp/presto_protocol/presto_protocol.h"
+#include "src/protocol/trino_protocol.h"
 #include "velox/exec/Split.h"
 
-namespace facebook::presto {
+namespace io::trino {
+// using namespace facebook;
 
 // Creates and returns exec::Split (with connector::ConnectorSplit inside) based
 // on the given protocol split.
-velox::exec::Split toVeloxSplit(
-    const presto::protocol::ScheduledSplit& scheduledSplit);
+facebook::velox::exec::Split toVeloxSplit(const protocol::ScheduledSplit& scheduledSplit);
 
-} // namespace facebook::presto
+}  // namespace io::trino
